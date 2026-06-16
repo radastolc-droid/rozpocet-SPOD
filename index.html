@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Čerpání rozpočtu dle kapitol – odchylka od tempa</title>
+<style>
+  :root{
+    --bg:#faf9f5; --surface:#ffffff; --line:#e7e4da; --line2:#d3d1c7;
+    --tx:#23231f; --tx2:#6b6a63; --tx3:#9c9a90;
+    --neg:#d85a30; --pos:#1d9e75; --neutral:#888780; --accent:#534ab7;
+    --warn-bg:#fbf3df;
+    --radius:10px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--tx);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.55;font-size:17px;}
+  .wrap{max-width:1000px;margin:0 auto;padding:28px 20px 64px;}
+  h1{font-size:27px;font-weight:600;margin:0 0 4px;}
+  .sub{color:var(--tx2);font-size:15px;margin:0 0 24px;}
+  .panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;margin-bottom:20px;}
+  .controls{display:flex;flex-direction:column;gap:14px;align-items:stretch;}
+  .pace{display:flex;align-items:center;gap:12px;width:100%;}
+  .btnrow{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+  .pace label{font-size:15px;color:var(--tx2);white-space:nowrap;}
+  input[type=range]{flex:1;accent-color:var(--accent);height:6px;}
+  .paceval{font-weight:600;min-width:52px;text-align:right;font-size:16px;}
+  .seg{display:inline-flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden;}
+  .seg button{border:0;background:transparent;padding:9px 16px;font-size:15px;cursor:pointer;color:var(--tx2);}
+  .seg button.on{background:var(--tx);color:#fff;}
+  .btn{border:1px solid var(--line2);background:transparent;border-radius:8px;padding:9px 16px;font-size:15px;cursor:pointer;color:var(--tx);}
+  .btn:hover{background:#f1efe8;}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px;}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:13px 15px;}
+  .card .l{font-size:13px;color:var(--tx2);margin-bottom:5px;}
+  .card .v{font-size:24px;font-weight:600;}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;font-size:14px;color:var(--tx2);margin:4px 0 18px;}
+  .legend span{display:flex;align-items:center;gap:6px;}
+  .sw{width:13px;height:13px;border-radius:2px;display:inline-block;}
+  .row{margin-bottom:16px;}
+  .row.sm{margin-bottom:11px;}
+  .rhead{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:6px;}
+  .rname{font-size:18px;font-weight:600;}
+  .rname.sm{font-size:16px;font-weight:400;}
+  .rmeta{font-size:14px;color:var(--tx2);white-space:nowrap;}
+  .rdev{font-size:15px;font-weight:600;white-space:nowrap;}
+  .track{position:relative;height:30px;background:#f1efe8;border-radius:6px;}
+  .track.sm{height:22px;}
+  .zero{position:absolute;left:50%;top:-3px;bottom:-3px;width:0;border-left:2px solid var(--tx3);}
+  .bar{position:absolute;top:0;bottom:0;}
+  .grp{border-left:2px solid var(--line);padding-left:14px;margin:6px 0 18px 2px;}
+  .grphead{font-size:14px;font-weight:600;margin:0 0 10px;}
+  table.mini{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px;}
+  table.mini th,table.mini td{text-align:right;padding:6px 8px;border-bottom:1px solid var(--line);}
+  table.mini th:first-child,table.mini td:first-child{text-align:left;}
+  table.mini th{color:var(--tx2);font-weight:500;font-size:12px;}
+  .note{background:var(--warn-bg);border:1px solid #f0d98a;border-radius:8px;padding:13px 16px;font-size:15px;color:#5c4a12;margin-top:18px;}
+  .foot{font-size:14px;color:var(--tx3);margin-top:18px;line-height:1.6;}
+  .filehint{font-size:14px;color:var(--tx3);margin-top:8px;}
+  @media print{body{background:#fff}.controls .btn,.seg{display:none}.panel{break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Čerpání rozpočtu dle kapitol</h1>
+  <p class="sub" id="subtitle">Odchylka skutečného čerpání od očekávaného tempa · služba doprovázení</p>
+
+  <div class="panel">
+    <div class="controls">
+      <div class="pace">
+        <label>Očekávané tempo (podíl roku)</label>
+        <input type="range" id="pace" min="0" max="100" step="1" value="46">
+        <span class="paceval" id="paceval">46 %</span>
+      </div>
+      <div class="btnrow">
+      <div class="seg" id="viewseg">
+        <button data-v="kap" class="on">Kapitoly</button>
+        <button data-v="det">Detail</button>
+      </div>
+      <div class="seg" id="modeseg">
+        <button data-m="dev" class="on">Odchylka</button>
+        <button data-m="pc">Plán vs. čerpáno</button>
+      </div>
+      <button class="btn" id="sortbtn">Řadit dle odchylky</button>
+      <label class="btn" style="cursor:pointer">Načíst CSV
+        <input type="file" id="file" accept=".csv" style="display:none">
+      </label>
+      </div>
+    </div>
+    <div class="filehint">Načti aktuální export listu „Rozpočet SPVPP – zdroj rozpočtu" (stejná struktura sloupců) a vizualizace se přepočítá. Nic se nikam neukládá, vše běží v prohlížeči.</div>
+  </div>
+
+  <div class="cards" id="cards"></div>
+
+  <div class="legend" id="legend"></div>
+
+  <div id="viz"></div>
+
+  <div class="note" id="note"></div>
+
+  <p class="foot">
+    Očekávané čerpání = plán × tempo. Tempo je lineární odhad – u sezónních kapitol (vzdělávání, respitní péče) může „pozadu“ znamenat jen jiný náběh v čase, u mzdových a provozních řádků je signál reálný.
+    Řádky bez přiřazené kapitoly (např. součtové) jsou vyloučeny.
+  </p>
+</div>
+
+<script>
+const EMBEDDED_CSV = "md2,účet3,účet4,účet,účet6,kap.pol.,čerp 2025,plán 2026,čerp 2026,poznámky,Kapitola\n50,501 materiál,5010 materiál,501000,501000 Spotřeba materiálu,1.07 Věcné výdaje - výdaje na spotřební mater,17 511,18 000,21 957,,1. Výkon doprovázení\n50,501 materiál,5011 kanc.potřeby,501100,501100 Kancelářské potřeby,1.07 Věcné výdaje - výdaje na spotřební mater,66 365,80 000,37 482,,1. Výkon doprovázení\n50,501 materiál,5012 odb.literatura,501200,501200 Odborná literatura,1.07 Věcné výdaje - výdaje na spotřební mater,30 509,35 000,709,,1. Výkon doprovázení\n50,501 materiál,5013 potraviny,501300,\"501300 Potraviny, občerstvení SEM, odměny dětem\",1.07 Věcné výdaje - výdaje na spotřební mater,50 066,55 000,28 651,,1. Výkon doprovázení\n50,501 materiál,5014 vybavení a technika,501400,501400 Tech. vybavení,1.07 Věcné výdaje - výdaje na spotřební mater,724 515,100 000,6 704,,1. Výkon doprovázení\n50,501 materiál,5014 vybavení a technika,501450,501450 Kancel. vybavení,1.07 Věcné výdaje - výdaje na spotřební mater,192 346,40 000,8 540,,1. Výkon doprovázení\n50,501 materiál,5015 PHM,501500,501500 Spotřeba PHM,1.06 Náklady na provoz služebního automobilu ,148 827,210 000,75 481,,1. Výkon doprovázení\n50,501 materiál,5016 pro děti,501600,501600 Materiál pro děti,1.07 Věcné výdaje - výdaje na spotřební mater,3 926,5 000,3 024,,1. Výkon doprovázení\n50,501 materiál,5018 propagační m.,501800,501800 Propagační materiál,,6 681,,0,,\n50,502 energie,5020 energie el.,502000,502000 Spotřeba energie,\"1.05 Provozní výdaje – nájemné, energie, služ\",16 344,20 000,19 200,,1. Výkon doprovázení\n50,502 energie,5021 energie teplo,502100,502100 Energie - teplo,\"1.05 Provozní výdaje – nájemné, energie, služ\",38 964,38 000,38 964,,1. Výkon doprovázení\n50,502 energie,5022 energie voda,502200,\"502200 Energie - vodné, stočné, srážková voda\",\"1.05 Provozní výdaje – nájemné, energie, služ\",8 427,10 000,10 920,,1. Výkon doprovázení\n50,502 energie,5023 energie plyn,502300,502300 Energie - plyn,\"1.05 Provozní výdaje – nájemné, energie, služ\",25 380,35 000,26 400,,1. Výkon doprovázení\n51,511 opravy,5110 opravy,511000,511000 Opravy a udržování,1.08 Nepřímé provozní náklady související s c,39 625,20 000,36 486,,1. Výkon doprovázení\n51,511 opravy,5119 opravy,511900,511900 Opravy a udržování - AUTO,1.06 Náklady na provoz služebního automobilu ,101 902,120 000,59 230,,1. Výkon doprovázení\n51,512 cestovné,5120 cestovné,512000,512000 Cestovné,1.03 Výdaje na poskytnutí cestovních náhrad z,96 497,100 000,35 753,,1. Výkon doprovázení\n51,518 ost.služby,5180 ost.služby,518000,518000 Ostatní služby,1.08 Nepřímé provozní náklady související s c,178 023,120 000,43 117,\"GPS, parkování (loni Perlovka)\",1. Výkon doprovázení\n51,518 ost.služby,5181 telefony,518100,518100 Telefony,\"1.05 Provozní výdaje – nájemné, energie, služ\",114 080,120 000,38 785,,1. Výkon doprovázení\n51,518 ost.služby,5182 nájemné+akt+ubyt,518200,518200 Nájemné,\"1.05 Provozní výdaje – nájemné, energie, služ\",382 732,380 000,236 015,,1. Výkon doprovázení\n51,518 ost.služby,5182 nájemné+akt+ubyt,518210,518210 Nájemné pro realizaci aktivit,\"4.7 Provozní, věcné a materiální náklady\",25 750,28 000,7 200,,4. Vzdělávání-klienti (5-10%)\n51,518 ost.služby,5182 nájemné+akt+ubyt,518230,518230 Dětské aktivity,\"4.7 Provozní, věcné a materiální náklady\",93 959,40 000,7 417,25 sobota+ 3 víkendy,4. Vzdělávání-klienti (5-10%)\n51,518 ost.služby,5182 nájemné+akt+ubyt,518250,518250 Ubytování,4.5 Ubytování,230 913,260 000,123 350,,4. Vzdělávání-klienti (5-10%)\n51,518 ost.služby,5183 poštovné,518300,518300 Poštovné,\"1.05 Provozní výdaje – nájemné, energie, služ\",553,1 000,1 297,,1. Výkon doprovázení\n51,518 ost.služby,\"5184 vzd, OP, lektorné\",518400,518400 Supervize,1.04 Výdaje na vzdělávání a supervizi zaměstn,23 500,40 000,0,,1. Výkon doprovázení\n51,518 ost.služby,\"5184 vzd, OP, lektorné\",518410,518410 Školení a vzdělávání,1.04 Výdaje na vzdělávání a supervizi zaměstn,85 652,85 000,48 021,,1. Výkon doprovázení\n51,518 ost.služby,\"5184 vzd, OP, lektorné\",518430,518430 Revize a odpady,1.08 Nepřímé provozní náklady související s c,22 358,20 000,0,,1. Výkon doprovázení\n51,518 ost.služby,\"5184 vzd, OP, lektorné\",518440,518440 Odborná pomoc,3.2 Terapie,154 200,400 000,139 500,,\"3. OP, terapie, kontakty s biol.r. (10-20%)\"\n51,518 ost.služby,\"5184 vzd, OP, lektorné\",518450,518450 Lektorné,4.1 Vzdělávání (služby vč. Mezd vzd.týmu),176 196,180 000,63 573,,4. Vzdělávání-klienti (5-10%)\n51,518 ost.služby,5185 leasing,518500,518500 Leasing operativní,1.10. Příspěvek na splácení leasingu či pronáj,176 843,234 000,138 320,,1. Výkon doprovázení\n51,518 ost.služby,5186 propagace,518600,\"518600 Propagace, tisk\",,90 930,0,0,,\n51,518 ost.služby,5187 služby klientům,518700,518700 Služby PP Respit - tábor,\"2.3 Respitní péče - služby, smlouvy\",420 738,800 000,474 928,,2. Krátk. nebo celodenní péče (5-15%)\n51,518 ost.služby,5187 služby klientům,518710,518710 Služby PP - odborná pomoc,3.2 Terapie,35 400,50 000,38 550,,\"3. OP, terapie, kontakty s biol.r. (10-20%)\"\n51,518 ost.služby,5187 služby klientům,518720,518720 Služby PP - vzdělávání,4.1 Vzdělávání (služby vč. Mezd vzd.týmu),6 100,10 000,6 038,,4. Vzdělávání-klienti (5-10%)\n51,518 ost.služby,5187 služby klientům,518730,518730 Služby PP - cestovné,3.4 Kontakt s biologickou rodinou - doprava,42 697,50 000,15 146,,\"3. OP, terapie, kontakty s biol.r. (10-20%)\"\n51,518 ost.služby,5187 služby klientům,518740,518740 Služby PP - hlídání dětí na akcích,4.1 Vzdělávání (služby vč. Mezd vzd.týmu),6 600,6 600,800,,4. Vzdělávání-klienti (5-10%)\n51,518 ost.služby,5188 IT servis,518800,518800 IT + software,1.08 Nepřímé provozní náklady související s c,66 207,70 000,47 705,,1. Výkon doprovázení\n52,521 mzdy,5210 mzdy,521090,521090 Osobní náklady - odstupné,,104 438,,0,,\n52,521 mzdy,5211 mzdy HPP,521100,521100 Mzdové náklady - přímá péče,\"1.01 Prostředky na mzdy, platy, odměny za prá\",5 700 000,5 800 000,2 618 049,,1. Výkon doprovázení\n52,521 mzdy,5211 mzdy HPP,521102,521102 Mzdové náklady - režie,1.09 Nepřímé osobní náklady související s cho,2 926 331,2 600 000,554 347,,1. Výkon doprovázení\n52,521 mzdy,5211 mzdy HPP,521103,521103 Mzdové náklady - OP,3.1 Odborné poradenství (mzdové náklady),,400 000,0,,\"3. OP, terapie, kontakty s biol.r. (10-20%)\"\n52,521 mzdy,5211 mzdy HPP,521101,521101 Mzdové náklady - vzdělávání,4.1 Vzdělávání (služby vč. Mezd vzd.týmu),,500 000,259 171,,4. Vzdělávání-klienti (5-10%)\n52,521 mzdy,5211 mzdy HPP,521110,521110 Mzdové náklady - DPČ,2.1 Krátkodobá péče - dohody o provedení prá,,20 000,11 950,,2. Krátk. nebo celodenní péče (5-15%)\n52,521 mzdy,5212 mzdy DPP odborníci,521200,\"521200 Mzdové náklady - odborníci, lektoři\",\"1.01 Prostředky na mzdy, platy, odměny za prá\",123 788,150 000,166 985,,1. Výkon doprovázení\n52,521 mzdy,5212 mzdy DPP odborníci,521240,521240 Mzdové náklady - DPP OP,3.1 Odborné poradenství (mzdové náklady),,,29 250,,\"3. OP, terapie, kontakty s biol.r. (10-20%)\"\n52,521 mzdy,5212 mzdy DPP odborníci,521290,521290 Mzdové náklady - odborníci THP,1.09 Nepřímé osobní náklady související s cho,205 000,205 000,21 900,,1. Výkon doprovázení\n52,521 mzdy,5213 mzdy DPP hlídání,521300,521300 Mzdové náklady - pečovatelé + ped. prac.,2.1 KH + celodenní - dohody o provedení prác,450 000,630 000,289 120,,2. Krátk. nebo celodenní péče (5-15%)\n52,521 mzdy,5214 mzdy DPP doučování,521400,521400 Mzdové náklady - doučovatelé,3.7 Doučování a školní potíže,262 494,0,0,,\"3. OP, terapie, kontakty s biol.r. (10-20%)\"\n52,524 zák.poj.,5242 odvody,524 Zá,524 Zákonné odvody,\"1.02 Pojistné na veřejné zdravotní pojištění,\",1 926 600,1 960 400,884 901,,1. Výkon doprovázení\n52,524 zák.poj.,5242 odvody,524 Zá,524 Zákonné odvody,1.09 Nepřímé osobní náklady související s cho,989 100,878 800,187 369,,1. Výkon doprovázení\n52,524 zák.poj.,5242 odvody,524 Zá,524 Zákonné odvody,3.1 Odborné poradenství (mzdové náklady),989 100,878 800,0,,\"3. OP, terapie, kontakty s biol.r. (10-20%)\"\n52,524 zák.poj.,5242 odvody,524 Zá,524 Zákonné odvody,4.1 Vzdělávání (služby vč. Mezd vzd.týmu),0,135 200,87 600,,4. Vzdělávání-klienti (5-10%)\n52,524 zák.poj.,5243 odvody,524300,524300 Zákonné odvody,\"1.02 Pojistné na veřejné zdravotní pojištění,\",0,169 000,9 590,,1. Výkon doprovázení\n52,527 (nemoc),5270 nemoc,527000,527000 Zákonné sociální náklady,\"1.01 Prostředky na mzdy, platy, odměny za prá\",39 223,40 000,3 649,,1. Výkon doprovázení\n54,549 pojistné,5490 ost. Náklady,549001,549001 Bankovní poplatky,1.08 Nepřímé provozní náklady související s c,1 164,1 200,0,,1. Výkon doprovázení\n54,549 pojistné,5490 ost. Náklady,549010,549010 Pojistné,1.08 Nepřímé provozní náklady související s c,51 232,52 000,50 203,,1. Výkon doprovázení\n,,,,,,,18 201 000 Kč,\"7 013 348,68\",,";
+
+const fmt = new Intl.NumberFormat('cs-CZ');
+const COL = {neg:'#d85a30', pos:'#1d9e75', plan:'#b4b2a9', cerp:'#1d9e75'};
+let DATA = null;
+let pace = 46, view='kap', mode='dev', sortDev=false;
+
+function parseCSV(text){
+  const rows=[]; let i=0, field='', row=[], q=false;
+  while(i<text.length){
+    const ch=text[i];
+    if(q){
+      if(ch==='"'){ if(text[i+1]==='"'){field+='"';i+=2;continue;} q=false;i++;continue; }
+      field+=ch;i++;continue;
+    }
+    if(ch==='"'){q=true;i++;continue;}
+    if(ch===','){row.push(field);field='';i++;continue;}
+    if(ch==='\r'){i++;continue;}
+    if(ch==='\n'){row.push(field);rows.push(row);row=[];field='';i++;continue;}
+    field+=ch;i++;
+  }
+  if(field.length||row.length){row.push(field);rows.push(row);}
+  return rows;
+}
+
+function num(v){
+  if(v==null) return 0;
+  let s=String(v).replace(/\u00a0/g,'').replace(/\s/g,'').replace(/Kč/gi,'').replace(/,/g,'.');
+  const n=parseFloat(s); return isNaN(n)?0:n;
+}
+
+function aggregate(text){
+  const rows=parseCSV(text);
+  if(!rows.length) return null;
+  const head=rows[0].map(h=>String(h).trim().toLowerCase());
+  const find=(pred)=>head.findIndex(pred);
+  const ciKap=find(h=>h==='kapitola');
+  const ciPol=find(h=>h.indexOf('kap.pol')>=0);
+  const ciPlan=find(h=>(h.indexOf('plán')>=0||h.indexOf('plan')>=0)&&h.indexOf('2026')>=0);
+  const ciCerp=find(h=>(h.indexOf('čerp')>=0||h.indexOf('cerp')>=0)&&h.indexOf('2026')>=0);
+  if(ciKap<0||ciPlan<0||ciCerp<0) return {error:'Nenašel jsem sloupce Kapitola / plán 2026 / čerp 2026.'};
+  const chMap=new Map();
+  for(let r=1;r<rows.length;r++){
+    const row=rows[r]; if(!row||row.length<=ciKap) continue;
+    const kap=String(row[ciKap]||'').trim();
+    if(!kap) continue;
+    const pol=ciPol>=0?String(row[ciPol]||'').trim():'(bez položky)';
+    const plan=num(row[ciPlan]), cerp=num(row[ciCerp]);
+    if(!chMap.has(kap)) chMap.set(kap,{name:kap,plan:0,cerp:0,subMap:new Map()});
+    const c=chMap.get(kap); c.plan+=plan; c.cerp+=cerp;
+    const key=pol||'(bez položky)';
+    if(!c.subMap.has(key)) c.subMap.set(key,{label:key,plan:0,cerp:0});
+    const s=c.subMap.get(key); s.plan+=plan; s.cerp+=cerp;
+  }
+  const chapters=[...chMap.values()].map(c=>({name:c.name,plan:c.plan,cerp:c.cerp,
+    sub:[...c.subMap.values()]}));
+  return {chapters};
+}
+
+function shortName(n){
+  return n.replace(/\s*\([^)]*\)\s*/g,'').trim();
+}
+
+function natKey(s){
+  const m=String(s).match(/^\s*(\d+(?:[.\s]\d+)*)/);
+  if(!m) return [Infinity];
+  return m[1].split(/[.\s]+/).filter(x=>x!=='').map(Number);
+}
+function cmpStruct(a,b){
+  const ka=natKey(a.name), kb=natKey(b.name);
+  const n=Math.max(ka.length,kb.length);
+  for(let i=0;i<n;i++){const da=ka[i]==null?-1:ka[i], db=kb[i]==null?-1:kb[i]; if(da!==db) return da-db;}
+  return 0;
+}
+
+function rowsForView(){
+  let r=[];
+  if(view==='kap'){
+    r=DATA.chapters.map(c=>({name:shortName(c.name),plan:c.plan,cerp:c.cerp,big:true}));
+  } else {
+    DATA.chapters.forEach(c=>c.sub.forEach(s=>r.push({name:s.label,plan:s.plan,cerp:s.cerp,big:false,chapter:shortName(c.name)})));
+  }
+  r.forEach(x=>{x.exp=Math.round(x.plan*pace/100); x.dev=x.cerp-x.exp; x.pct=x.plan>0?x.cerp/x.plan:0;});
+  if(sortDev) r.sort((a,b)=>a.dev-b.dev);
+  else r.sort(cmpStruct);
+  return r;
+}
+
+function signFmt(v){return (v>0?'+':v<0?'−':'')+fmt.format(Math.abs(Math.round(v)))+' Kč';}
+
+function renderCards(){
+  const tp=DATA.chapters.reduce((s,c)=>s+c.plan,0);
+  const tc=DATA.chapters.reduce((s,c)=>s+c.cerp,0);
+  const te=Math.round(tp*pace/100), td=tc-te;
+  const cards=[
+    ['Plán 2026', fmt.format(Math.round(tp))+' Kč',''],
+    ['Čerpáno', fmt.format(Math.round(tc))+' Kč',''],
+    ['Čerpání / plán', (tp>0?Math.round(tc/tp*100):0)+' %',''],
+    ['Očekáváno (× tempo)', fmt.format(te)+' Kč',''],
+    ['Celková odchylka', signFmt(td), td<0?COL.neg:COL.pos],
+  ];
+  document.getElementById('cards').innerHTML=cards.map(c=>
+    `<div class="card"><div class="l">${c[0]}</div><div class="v" style="color:${c[2]||'var(--tx)'}">${c[1]}</div></div>`).join('');
+}
+
+function renderLegend(){
+  const L=document.getElementById('legend');
+  if(mode==='dev'){
+    L.innerHTML=`<span><span class="sw" style="background:${COL.neg}"></span>pod tempem (riziko nevyčerpání)</span>
+      <span><span class="sw" style="background:${COL.pos}"></span>nad tempem / napřed</span>
+      <span>svislá čára = nula</span>`;
+  } else {
+    L.innerHTML=`<span><span class="sw" style="background:${COL.plan}"></span>plán</span>
+      <span><span class="sw" style="background:${COL.cerp}"></span>čerpáno</span>`;
+  }
+}
+
+function devRow(x){
+  const neg=x.dev<0;
+  return {neg, col:neg?COL.neg:COL.pos};
+}
+
+function render(){
+  if(!DATA){return;}
+  document.getElementById('paceval').textContent=pace+' %';
+  renderCards(); renderLegend();
+  const r=rowsForView();
+  const viz=document.getElementById('viz');
+
+  if(mode==='dev'){
+    const maxAbs=Math.max(1,...r.map(x=>Math.abs(x.dev)));
+    viz.innerHTML=r.map(x=>{
+      const d=devRow(x); const halfW=Math.abs(x.dev)/maxAbs*50;
+      const bar=d.neg
+        ? `right:50%;width:${halfW}%;border-radius:6px 0 0 6px;background:${d.col};`
+        : `left:50%;width:${halfW}%;border-radius:0 6px 6px 0;background:${d.col};`;
+      return `<div class="row ${x.big?'':'sm'}">
+        <div class="rhead">
+          <span class="rname ${x.big?'':'sm'}">${x.name}</span>
+          <span class="rdev" style="color:${d.col}">${signFmt(x.dev)}</span>
+        </div>
+        <div class="track ${x.big?'':'sm'}"><div class="zero"></div><div class="bar" style="${bar}"></div></div>
+      </div>`;
+    }).join('');
+  } else {
+    const maxPlan=Math.max(1,...r.map(x=>Math.max(x.plan,x.cerp)));
+    viz.innerHTML=r.map(x=>{
+      const wp=x.plan/maxPlan*100, wc=x.cerp/maxPlan*100;
+      const pct=x.plan>0?Math.round(x.cerp/x.plan*100):0;
+      return `<div class="row ${x.big?'':'sm'}">
+        <div class="rhead">
+          <span class="rname ${x.big?'':'sm'}">${x.name}</span>
+          <span class="rmeta">${fmt.format(Math.round(x.cerp))} / ${fmt.format(Math.round(x.plan))} Kč · ${pct} %</span>
+        </div>
+        <div class="track" style="height:${x.big?34:26}px;background:transparent;">
+          <div class="bar" style="left:0;width:${wp}%;background:${COL.plan};border-radius:6px;height:${x.big?14:11}px;top:0;"></div>
+          <div class="bar" style="left:0;width:${wc}%;background:${COL.cerp};border-radius:6px;height:${x.big?14:11}px;bottom:0;"></div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+}
+
+function renderNote(){
+  // automaticky upozorni na 2 největší absolutní podčerpání v detailu
+  let det=[]; DATA.chapters.forEach(c=>c.sub.forEach(s=>{
+    const exp=s.plan*pace/100; det.push({label:s.label,dev:s.cerp-exp,plan:s.plan,cerp:s.cerp});
+  }));
+  det.sort((a,b)=>a.dev-b.dev);
+  const worst=det.filter(d=>d.dev<0).slice(0,2);
+  if(!worst.length){document.getElementById('note').style.display='none';return;}
+  document.getElementById('note').innerHTML='Největší absolutní podčerpání proti tempu: '+
+    worst.map(d=>`<b>${shortName(d.label)}</b> (${signFmt(d.dev)})`).join(', ')+
+    '. Tyto položky táhnou celkovou odchylku nejvíc – soustřeď pozornost sem, ne na procenta malých kapitol.';
+}
+
+function loadText(text){
+  const agg=aggregate(text);
+  if(!agg||agg.error){alert(agg&&agg.error?agg.error:'CSV se nepodařilo načíst.');return;}
+  DATA=agg; render(); renderNote();
+}
+
+// ovládání
+document.getElementById('pace').addEventListener('input',e=>{pace=+e.target.value;render();renderNote();});
+document.getElementById('viewseg').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b)return;
+  view=b.dataset.v;[...e.currentTarget.children].forEach(x=>x.classList.toggle('on',x===b));render();
+});
+document.getElementById('modeseg').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b)return;
+  mode=b.dataset.m;[...e.currentTarget.children].forEach(x=>x.classList.toggle('on',x===b));render();
+});
+document.getElementById('sortbtn').addEventListener('click',e=>{
+  sortDev=!sortDev; e.target.textContent=sortDev?'Řadit dle struktury':'Řadit dle odchylky';
+  e.target.style.background=sortDev?'#f1efe8':'transparent'; render();
+});
+document.getElementById('file').addEventListener('change',e=>{
+  const f=e.target.files[0]; if(!f)return;
+  const rd=new FileReader();
+  rd.onload=()=>{ loadText(rd.result); };
+  rd.readAsText(f,'utf-8');
+});
+
+loadText(EMBEDDED_CSV);
+</script>
+</body>
+</html>
