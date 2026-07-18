@@ -71,8 +71,8 @@
     <div class="controls">
       <div class="pace">
         <label>Očekávané tempo (podíl roku)</label>
-        <input type="range" id="pace" min="0" max="100" step="1" value="46">
-        <span class="paceval" id="paceval">46 %</span>
+        <input type="range" id="pace" min="0" max="100" step="1" value="50">
+        <span class="paceval" id="paceval">50 %</span>
       </div>
       <div class="btnrow">
       <div class="seg" id="viewseg">
@@ -113,7 +113,7 @@ const EMBEDDED_CSV = "md2,účet3,účet4,účet,účet6,kap.pol.,čerp 2025,pl�
 const fmt = new Intl.NumberFormat('cs-CZ');
 const COL = {dev:'#3a6ea5', plan:'#d1cec5', cerp:'#3a6ea5', ok:'#2f8f5b', out:'#c0562a', band:'rgba(47,143,91,0.15)', bandbd:'rgba(47,143,91,0.6)'};
 let DATA = null;
-let pace = 46, view='kap', mode='pc', sortDev=false;
+let pace = 50, view='kap', mode='pc', sortDev=false;
 
 function parseCSV(text){
   const rows=[]; let i=0, field='', row=[], q=false;
