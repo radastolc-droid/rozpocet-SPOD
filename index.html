@@ -8,7 +8,8 @@
   :root{
     --bg:#faf9f5; --surface:#ffffff; --line:#e7e4da; --line2:#d3d1c7;
     --tx:#23231f; --tx2:#6b6a63; --tx3:#9c9a90;
-    --neg:#d85a30; --pos:#1d9e75; --neutral:#888780; --accent:#534ab7;
+    --neg:#7f9bbd; --pos:#2f5f92; --neutral:#888780; --accent:#534ab7;
+    --ok:#2f8f5b; --out:#c0562a; --band:rgba(47,143,91,0.15); --bandbd:rgba(47,143,91,0.6);
     --warn-bg:#fbf3df;
     --radius:10px;
   }
@@ -79,8 +80,9 @@
         <button data-v="det">Detail</button>
       </div>
       <div class="seg" id="modeseg">
-        <button data-m="dev" class="on">Odchylka</button>
-        <button data-m="pc">Plán vs. čerpáno</button>
+        <button data-m="dev">Odchylka</button>
+        <button data-m="pc" class="on">Plán vs. čerpáno</button>
+        <button data-m="share">Podíl na celku</button>
       </div>
       <button class="btn" id="sortbtn">Řadit dle odchylky</button>
       <label class="btn" style="cursor:pointer">Načíst CSV
@@ -106,12 +108,12 @@
 </div>
 
 <script>
-const EMBEDDED_CSV = "md2,účet3,účet4,účet,účet6,kap.pol.,čerp 2025,plán 2026,čerp 2026,poznámky,Kapitola\n50,501 materiál,5010 materiál,501000,501000 Spotřeba materiálu,1.07 Věcné výdaje - výdaje na spotřební mater,17 511,18 000,21 957,,1. Výkon doprovázení\n50,501 materiál,5011 kanc.potřeby,501100,501100 Kancelářské potřeby,1.07 Věcné výdaje - výdaje na spotřební mater,66 365,80 000,37 482,,1. Výkon doprovázení\n50,501 materiál,5012 odb.literatura,501200,501200 Odborná literatura,1.07 Věcné výdaje - výdaje na spotřební mater,30 509,35 000,709,,1. Výkon doprovázení\n50,501 materiál,5013 potraviny,501300,\"501300 Potraviny, občerstvení SEM, odměny dětem\",1.07 Věcné výdaje - výdaje na spotřební mater,50 066,55 000,28 651,,1. Výkon doprovázení\n50,501 materiál,5014 vybavení a technika,501400,501400 Tech. vybavení,1.07 Věcné výdaje - výdaje na spotřební mater,724 515,100 000,6 704,,1. Výkon doprovázení\n50,501 materiál,5014 vybavení a technika,501450,501450 Kancel. vybavení,1.07 Věcné výdaje - výdaje na spotřební mater,192 346,40 000,8 540,,1. Výkon doprovázení\n50,501 materiál,5015 PHM,501500,501500 Spotřeba PHM,1.06 Náklady na provoz služebního automobilu ,148 827,210 000,75 481,,1. Výkon doprovázení\n50,501 materiál,5016 pro děti,501600,501600 Materiál pro děti,1.07 Věcné výdaje - výdaje na spotřební mater,3 926,5 000,3 024,,1. Výkon doprovázení\n50,501 materiál,5018 propagační m.,501800,501800 Propagační materiál,,6 681,,0,,\n50,502 energie,5020 energie el.,502000,502000 Spotřeba energie,\"1.05 Provozní výdaje – nájemné, energie, služ\",16 344,20 000,19 200,,1. Výkon doprovázení\n50,502 energie,5021 energie teplo,502100,502100 Energie - teplo,\"1.05 Provozní výdaje – nájemné, energie, služ\",38 964,38 000,38 964,,1. Výkon doprovázení\n50,502 energie,5022 energie voda,502200,\"502200 Energie - vodné, stočné, srážková voda\",\"1.05 Provozní výdaje – nájemné, energie, služ\",8 427,10 000,10 920,,1. Výkon doprovázení\n50,502 energie,5023 energie plyn,502300,502300 Energie - plyn,\"1.05 Provozní výdaje – nájemné, energie, služ\",25 380,35 000,26 400,,1. Výkon doprovázení\n51,511 opravy,5110 opravy,511000,511000 Opravy a udržování,1.08 Nepřímé provozní náklady související s c,39 625,20 000,36 486,,1. Výkon doprovázení\n51,511 opravy,5119 opravy,511900,511900 Opravy a udržování - AUTO,1.06 Náklady na provoz služebního automobilu ,101 902,120 000,59 230,,1. Výkon doprovázení\n51,512 cestovné,5120 cestovné,512000,512000 Cestovné,1.03 Výdaje na poskytnutí cestovních náhrad z,96 497,100 000,35 753,,1. Výkon doprovázení\n51,518 ost.služby,5180 ost.služby,518000,518000 Ostatní služby,1.08 Nepřímé provozní náklady související s c,178 023,120 000,43 117,\"GPS, parkování (loni Perlovka)\",1. Výkon doprovázení\n51,518 ost.služby,5181 telefony,518100,518100 Telefony,\"1.05 Provozní výdaje – nájemné, energie, služ\",114 080,120 000,38 785,,1. Výkon doprovázení\n51,518 ost.služby,5182 nájemné+akt+ubyt,518200,518200 Nájemné,\"1.05 Provozní výdaje – nájemné, energie, služ\",382 732,380 000,236 015,,1. Výkon doprovázení\n51,518 ost.služby,5182 nájemné+akt+ubyt,518210,518210 Nájemné pro realizaci aktivit,\"4.7 Provozní, věcné a materiální náklady\",25 750,28 000,7 200,,4. Vzdělávání-klienti (5-10%)\n51,518 ost.služby,5182 nájemné+akt+ubyt,518230,518230 Dětské aktivity,\"4.7 Provozní, věcné a materiální náklady\",93 959,40 000,7 417,25 sobota+ 3 víkendy,4. Vzdělávání-klienti (5-10%)\n51,518 ost.služby,5182 nájemné+akt+ubyt,518250,518250 Ubytování,4.5 Ubytování,230 913,260 000,123 350,,4. Vzdělávání-klienti (5-10%)\n51,518 ost.služby,5183 poštovné,518300,518300 Poštovné,\"1.05 Provozní výdaje – nájemné, energie, služ\",553,1 000,1 297,,1. Výkon doprovázení\n51,518 ost.služby,\"5184 vzd, OP, lektorné\",518400,518400 Supervize,1.04 Výdaje na vzdělávání a supervizi zaměstn,23 500,40 000,0,,1. Výkon doprovázení\n51,518 ost.služby,\"5184 vzd, OP, lektorné\",518410,518410 Školení a vzdělávání,1.04 Výdaje na vzdělávání a supervizi zaměstn,85 652,85 000,48 021,,1. Výkon doprovázení\n51,518 ost.služby,\"5184 vzd, OP, lektorné\",518430,518430 Revize a odpady,1.08 Nepřímé provozní náklady související s c,22 358,20 000,0,,1. Výkon doprovázení\n51,518 ost.služby,\"5184 vzd, OP, lektorné\",518440,518440 Odborná pomoc,3.2 Terapie,154 200,400 000,139 500,,\"3. OP, terapie, kontakty s biol.r. (10-20%)\"\n51,518 ost.služby,\"5184 vzd, OP, lektorné\",518450,518450 Lektorné,4.1 Vzdělávání (služby vč. Mezd vzd.týmu),176 196,180 000,63 573,,4. Vzdělávání-klienti (5-10%)\n51,518 ost.služby,5185 leasing,518500,518500 Leasing operativní,1.10. Příspěvek na splácení leasingu či pronáj,176 843,234 000,138 320,,1. Výkon doprovázení\n51,518 ost.služby,5186 propagace,518600,\"518600 Propagace, tisk\",,90 930,0,0,,\n51,518 ost.služby,5187 služby klientům,518700,518700 Služby PP Respit - tábor,\"2.3 Respitní péče - služby, smlouvy\",420 738,800 000,474 928,,2. Krátk. nebo celodenní péče (5-15%)\n51,518 ost.služby,5187 služby klientům,518710,518710 Služby PP - odborná pomoc,3.2 Terapie,35 400,50 000,38 550,,\"3. OP, terapie, kontakty s biol.r. (10-20%)\"\n51,518 ost.služby,5187 služby klientům,518720,518720 Služby PP - vzdělávání,4.1 Vzdělávání (služby vč. Mezd vzd.týmu),6 100,10 000,6 038,,4. Vzdělávání-klienti (5-10%)\n51,518 ost.služby,5187 služby klientům,518730,518730 Služby PP - cestovné,3.4 Kontakt s biologickou rodinou - doprava,42 697,50 000,15 146,,\"3. OP, terapie, kontakty s biol.r. (10-20%)\"\n51,518 ost.služby,5187 služby klientům,518740,518740 Služby PP - hlídání dětí na akcích,4.1 Vzdělávání (služby vč. Mezd vzd.týmu),6 600,6 600,800,,4. Vzdělávání-klienti (5-10%)\n51,518 ost.služby,5188 IT servis,518800,518800 IT + software,1.08 Nepřímé provozní náklady související s c,66 207,70 000,47 705,,1. Výkon doprovázení\n52,521 mzdy,5210 mzdy,521090,521090 Osobní náklady - odstupné,,104 438,,0,,\n52,521 mzdy,5211 mzdy HPP,521100,521100 Mzdové náklady - přímá péče,\"1.01 Prostředky na mzdy, platy, odměny za prá\",5 700 000,5 800 000,2 618 049,,1. Výkon doprovázení\n52,521 mzdy,5211 mzdy HPP,521102,521102 Mzdové náklady - režie,1.09 Nepřímé osobní náklady související s cho,2 926 331,2 600 000,554 347,,1. Výkon doprovázení\n52,521 mzdy,5211 mzdy HPP,521103,521103 Mzdové náklady - OP,3.1 Odborné poradenství (mzdové náklady),,400 000,0,,\"3. OP, terapie, kontakty s biol.r. (10-20%)\"\n52,521 mzdy,5211 mzdy HPP,521101,521101 Mzdové náklady - vzdělávání,4.1 Vzdělávání (služby vč. Mezd vzd.týmu),,500 000,259 171,,4. Vzdělávání-klienti (5-10%)\n52,521 mzdy,5211 mzdy HPP,521110,521110 Mzdové náklady - DPČ,2.1 Krátkodobá péče - dohody o provedení prá,,20 000,11 950,,2. Krátk. nebo celodenní péče (5-15%)\n52,521 mzdy,5212 mzdy DPP odborníci,521200,\"521200 Mzdové náklady - odborníci, lektoři\",\"1.01 Prostředky na mzdy, platy, odměny za prá\",123 788,150 000,166 985,,1. Výkon doprovázení\n52,521 mzdy,5212 mzdy DPP odborníci,521240,521240 Mzdové náklady - DPP OP,3.1 Odborné poradenství (mzdové náklady),,,29 250,,\"3. OP, terapie, kontakty s biol.r. (10-20%)\"\n52,521 mzdy,5212 mzdy DPP odborníci,521290,521290 Mzdové náklady - odborníci THP,1.09 Nepřímé osobní náklady související s cho,205 000,205 000,21 900,,1. Výkon doprovázení\n52,521 mzdy,5213 mzdy DPP hlídání,521300,521300 Mzdové náklady - pečovatelé + ped. prac.,2.1 KH + celodenní - dohody o provedení prác,450 000,630 000,289 120,,2. Krátk. nebo celodenní péče (5-15%)\n52,521 mzdy,5214 mzdy DPP doučování,521400,521400 Mzdové náklady - doučovatelé,3.7 Doučování a školní potíže,262 494,0,0,,\"3. OP, terapie, kontakty s biol.r. (10-20%)\"\n52,524 zák.poj.,5242 odvody,524 Zá,524 Zákonné odvody,\"1.02 Pojistné na veřejné zdravotní pojištění,\",1 926 600,1 960 400,884 901,,1. Výkon doprovázení\n52,524 zák.poj.,5242 odvody,524 Zá,524 Zákonné odvody,1.09 Nepřímé osobní náklady související s cho,989 100,878 800,187 369,,1. Výkon doprovázení\n52,524 zák.poj.,5242 odvody,524 Zá,524 Zákonné odvody,3.1 Odborné poradenství (mzdové náklady),989 100,878 800,0,,\"3. OP, terapie, kontakty s biol.r. (10-20%)\"\n52,524 zák.poj.,5242 odvody,524 Zá,524 Zákonné odvody,4.1 Vzdělávání (služby vč. Mezd vzd.týmu),0,135 200,87 600,,4. Vzdělávání-klienti (5-10%)\n52,524 zák.poj.,5243 odvody,524300,524300 Zákonné odvody,\"1.02 Pojistné na veřejné zdravotní pojištění,\",0,169 000,9 590,,1. Výkon doprovázení\n52,527 (nemoc),5270 nemoc,527000,527000 Zákonné sociální náklady,\"1.01 Prostředky na mzdy, platy, odměny za prá\",39 223,40 000,3 649,,1. Výkon doprovázení\n54,549 pojistné,5490 ost. Náklady,549001,549001 Bankovní poplatky,1.08 Nepřímé provozní náklady související s c,1 164,1 200,0,,1. Výkon doprovázení\n54,549 pojistné,5490 ost. Náklady,549010,549010 Pojistné,1.08 Nepřímé provozní náklady související s c,51 232,52 000,50 203,,1. Výkon doprovázení\n,,,,,,,18 201 000 Kč,\"7 013 348,68\",,";
+const EMBEDDED_CSV = "md2,účet3,účet4,účet,účet6,kap.pol.,čerp 2025,plán 2026,čerp 2026,poznámky,Kapitola\n50,501 materiál,5010 materiál,501000,501000 Spotřeba materiálu,1.07 Věcné výdaje - výdaje na spotřební mater,17 511,18 000,24 888,,1. Výkon doprovázení\n50,501 materiál,5011 kanc.potřeby,501100,501100 Kancelářské potřeby,1.07 Věcné výdaje - výdaje na spotřební mater,66 365,80 000,38 027,,1. Výkon doprovázení\n50,501 materiál,5012 odb.literatura,501200,501200 Odborná literatura,1.07 Věcné výdaje - výdaje na spotřební mater,30 509,35 000,709,,1. Výkon doprovázení\n50,501 materiál,5013 potraviny,501300,\"501300 Potraviny, občerstvení SEM, odměny dětem\",1.07 Věcné výdaje - výdaje na spotřební mater,50 066,55 000,29 433,,1. Výkon doprovázení\n50,501 materiál,5014 vybavení a technika,501400,501400 Tech. vybavení,1.07 Věcné výdaje - výdaje na spotřební mater,724 515,100 000,25 031,,1. Výkon doprovázení\n50,501 materiál,5014 vybavení a technika,501450,501450 Kancel. vybavení,1.07 Věcné výdaje - výdaje na spotřební mater,192 346,40 000,15 357,,1. Výkon doprovázení\n50,501 materiál,5015 PHM,501500,501500 Spotřeba PHM,1.06 Náklady na provoz služebního automobilu ,148 827,210 000,85 857,,1. Výkon doprovázení\n50,501 materiál,5016 pro děti,501600,501600 Materiál pro děti,1.07 Věcné výdaje - výdaje na spotřební mater,3 926,5 000,3 024,,1. Výkon doprovázení\n50,501 materiál,5018 propagační m.,501800,501800 Propagační materiál,,6 681,,0,,\n50,502 energie,5020 energie el.,502000,502000 Spotřeba energie,\"1.05 Provozní výdaje – nájemné, energie, služ\",16 344,20 000,20 400,,1. Výkon doprovázení\n50,502 energie,5021 energie teplo,502100,502100 Energie - teplo,\"1.05 Provozní výdaje – nájemné, energie, služ\",38 964,38 000,38 964,,1. Výkon doprovázení\n50,502 energie,5022 energie voda,502200,\"502200 Energie - vodné, stočné, srážková voda\",\"1.05 Provozní výdaje – nájemné, energie, služ\",8 427,10 000,10 920,,1. Výkon doprovázení\n50,502 energie,5023 energie plyn,502300,502300 Energie - plyn,\"1.05 Provozní výdaje – nájemné, energie, služ\",25 380,35 000,26 400,,1. Výkon doprovázení\n51,511 opravy,5110 opravy,511000,511000 Opravy a udržování,1.08 Nepřímé provozní náklady související s c,39 625,25 340,36 486,,1. Výkon doprovázení\n51,511 opravy,5119 opravy,511900,511900 Opravy a udržování - AUTO,1.06 Náklady na provoz služebního automobilu ,101 902,120 000,59 230,,1. Výkon doprovázení\n51,512 cestovné,5120 cestovné,512000,512000 Cestovné,1.03 Výdaje na poskytnutí cestovních náhrad z,96 497,100 000,38 861,,1. Výkon doprovázení\n51,518 ost.služby,5180 ost.služby,518000,518000 Ostatní služby,1.08 Nepřímé provozní náklady související s c,178 023,120 000,54 878,\"GPS, parkování (loni Perlovka)\",1. Výkon doprovázení\n51,518 ost.služby,5181 telefony,518100,518100 Telefony,\"1.05 Provozní výdaje – nájemné, energie, služ\",114 080,120 000,56 252,,1. Výkon doprovázení\n51,518 ost.služby,5182 nájemné+akt+ubyt,518200,518200 Nájemné,\"1.05 Provozní výdaje – nájemné, energie, služ\",382 732,380 000,261 515,,1. Výkon doprovázení\n51,518 ost.služby,5182 nájemné+akt+ubyt,518210,518210 Nájemné pro realizaci aktivit,\"4.7 Provozní, věcné a materiální náklady\",25 750,28 000,11 400,,4. Vzdělávání-klienti (5-10%)\n51,518 ost.služby,5182 nájemné+akt+ubyt,518230,518230 Dětské aktivity,\"4.7 Provozní, věcné a materiální náklady\",93 959,40 000,7 417,25 sobota+ 3 víkendy,4. Vzdělávání-klienti (5-10%)\n51,518 ost.služby,5182 nájemné+akt+ubyt,518250,518250 Ubytování,4.5 Ubytování,230 913,260 000,123 350,,4. Vzdělávání-klienti (5-10%)\n51,518 ost.služby,5183 poštovné,518300,518300 Poštovné,\"1.05 Provozní výdaje – nájemné, energie, služ\",553,1 000,1 393,,1. Výkon doprovázení\n51,518 ost.služby,\"5184 vzd, OP, lektorné\",518400,518400 Supervize,1.04 Výdaje na vzdělávání a supervizi zaměstn,23 500,40 000,0,,1. Výkon doprovázení\n51,518 ost.služby,\"5184 vzd, OP, lektorné\",518410,518410 Školení a vzdělávání,1.04 Výdaje na vzdělávání a supervizi zaměstn,85 652,85 000,54 176,,1. Výkon doprovázení\n51,518 ost.služby,\"5184 vzd, OP, lektorné\",518430,518430 Revize a odpady,1.08 Nepřímé provozní náklady související s c,22 358,20 000,0,,1. Výkon doprovázení\n51,518 ost.služby,\"5184 vzd, OP, lektorné\",518440,518440 Odborná pomoc,3.2 Terapie,154 200,400 000,165 500,,\"3. OP, terapie, kontakty s biol.r. (10-20%)\"\n51,518 ost.služby,\"5184 vzd, OP, lektorné\",518450,518450 Lektorné,4.1 Vzdělávání (služby vč. Mezd vzd.týmu),176 196,180 000,63 573,,4. Vzdělávání-klienti (5-10%)\n51,518 ost.služby,5185 leasing,518500,518500 Leasing operativní,1.10. Příspěvek na splácení leasingu či pronáj,176 843,234 000,158 080,,1. Výkon doprovázení\n51,518 ost.služby,5186 propagace,518600,\"518600 Propagace, tisk\",,90 930,0,0,,\n51,518 ost.služby,5187 služby klientům,518700,518700 Služby PP Respit - tábor,\"2.3 Respitní péče - služby, smlouvy\",420 738,800 000,537 653,,2. Krátk. nebo celodenní péče (5-15%)\n51,518 ost.služby,5187 služby klientům,518710,518710 Služby PP - odborná pomoc,3.2 Terapie,35 400,50 000,47 050,,\"3. OP, terapie, kontakty s biol.r. (10-20%)\"\n51,518 ost.služby,5187 služby klientům,518720,518720 Služby PP - vzdělávání,4.1 Vzdělávání (služby vč. Mezd vzd.týmu),6 100,10 000,31 487,,4. Vzdělávání-klienti (5-10%)\n51,518 ost.služby,5187 služby klientům,518730,518730 Služby PP - cestovné,3.4 Kontakt s biologickou rodinou - doprava,42 697,50 000,15 146,,\"3. OP, terapie, kontakty s biol.r. (10-20%)\"\n51,518 ost.služby,5187 služby klientům,518740,518740 Služby PP - hlídání dětí na akcích,4.1 Vzdělávání (služby vč. Mezd vzd.týmu),6 600,6 600,800,,4. Vzdělávání-klienti (5-10%)\n51,518 ost.služby,5188 IT servis,518800,518800 IT + software,1.08 Nepřímé provozní náklady související s c,66 207,70 000,49 855,,1. Výkon doprovázení\n52,521 mzdy,5210 mzdy,521090,521090 Osobní náklady - odstupné,,104 438,,0,,\n52,521 mzdy,5211 mzdy HPP,521100,521100 Mzdové náklady - přímá péče,\"1.01 Prostředky na mzdy, platy, odměny za prá\",5 700 000,6 450 000,3 453 357,,1. Výkon doprovázení\n52,521 mzdy,5211 mzdy HPP,521102,521102 Mzdové náklady - režie,1.09 Nepřímé osobní náklady související s cho,2 926 331,2 060 000,942 746,,1. Výkon doprovázení\n52,521 mzdy,5211 mzdy HPP,521103,521103 Mzdové náklady - OP,3.1 Odborné poradenství (mzdové náklady),,400 000,0,,\"3. OP, terapie, kontakty s biol.r. (10-20%)\"\n52,521 mzdy,5211 mzdy HPP,521101,521101 Mzdové náklady - vzdělávání,4.1 Vzdělávání (služby vč. Mezd vzd.týmu),,500 000,385 514,,4. Vzdělávání-klienti (5-10%)\n52,521 mzdy,5211 mzdy HPP,521110,521110 Mzdové náklady - DPČ,2.1 Krátkodobá péče - dohody o provedení prá,,20 000,11 950,,2. Krátk. nebo celodenní péče (5-15%)\n52,521 mzdy,5212 mzdy DPP odborníci,521200,\"521200 Mzdové náklady - odborníci, lektoři\",\"1.01 Prostředky na mzdy, platy, odměny za prá\",123 788,150 000,230 698,,1. Výkon doprovázení\n52,521 mzdy,5212 mzdy DPP odborníci,521240,521240 Mzdové náklady - DPP OP,3.1 Odborné poradenství (mzdové náklady),,,37 250,,\"3. OP, terapie, kontakty s biol.r. (10-20%)\"\n52,521 mzdy,5212 mzdy DPP odborníci,521290,521290 Mzdové náklady - odborníci THP,1.09 Nepřímé osobní náklady související s cho,205 000,235 000,32 000,,1. Výkon doprovázení\n52,521 mzdy,5213 mzdy DPP hlídání,521300,521300 Mzdové náklady - pečovatelé + ped. prac.,2.1 KH + celodenní - dohody o provedení prác,450 000,630 000,346 335,,2. Krátk. nebo celodenní péče (5-15%)\n52,521 mzdy,5214 mzdy DPP doučování,521400,521400 Mzdové náklady - doučovatelé,3.7 Doučování a školní potíže,262 494,0,0,,\"3. OP, terapie, kontakty s biol.r. (10-20%)\"\n52,524 zák.poj.,5242 odvody,524 Zá,524 Zákonné odvody,\"1.02 Pojistné na veřejné zdravotní pojištění,\",1 926 600,2 180 100,1 167 235,,1. Výkon doprovázení\n52,524 zák.poj.,5242 odvody,524 Zá,524 Zákonné odvody,1.09 Nepřímé osobní náklady související s cho,989 100,696 280,318 648,,1. Výkon doprovázení\n52,524 zák.poj.,5242 odvody,524 Zá,524 Zákonné odvody,3.1 Odborné poradenství (mzdové náklady),989 100,696 280,0,,\"3. OP, terapie, kontakty s biol.r. (10-20%)\"\n52,524 zák.poj.,5242 odvody,524 Zá,524 Zákonné odvody,4.1 Vzdělávání (služby vč. Mezd vzd.týmu),0,135 200,130 304,,4. Vzdělávání-klienti (5-10%)\n52,524 zák.poj.,5243 odvody,524300,524300 Zákonné odvody,\"1.02 Pojistné na veřejné zdravotní pojištění,\",0,169 000,21 442,,1. Výkon doprovázení\n52,527 (nemoc),5270 nemoc,527000,527000 Zákonné sociální náklady,\"1.01 Prostředky na mzdy, platy, odměny za prá\",39 223,40 000,3 649,,1. Výkon doprovázení\n54,549 pojistné,5490 ost. Náklady,549001,549001 Bankovní poplatky,1.08 Nepřímé provozní náklady související s c,1 164,1 200,0,,1. Výkon doprovázení\n54,549 pojistné,5490 ost. Náklady,549010,549010 Pojistné,1.08 Nepřímé provozní náklady související s c,51 232,52 000,63 472,,1. Výkon doprovázení\n,,,,,,,18 201 000 Kč,\"9 237 712,12\",,";
 
 const fmt = new Intl.NumberFormat('cs-CZ');
-const COL = {neg:'#d85a30', pos:'#1d9e75', plan:'#b4b2a9', cerp:'#1d9e75'};
+const COL = {dev:'#3a6ea5', plan:'#d1cec5', cerp:'#3a6ea5', ok:'#2f8f5b', out:'#c0562a', band:'rgba(47,143,91,0.15)', bandbd:'rgba(47,143,91,0.6)'};
 let DATA = null;
-let pace = 46, view='kap', mode='dev', sortDev=false;
+let pace = 46, view='kap', mode='pc', sortDev=false;
 
 function parseCSV(text){
   const rows=[]; let i=0, field='', row=[], q=false;
@@ -160,7 +162,8 @@ function aggregate(text){
     if(!c.subMap.has(key)) c.subMap.set(key,{label:key,plan:0,cerp:0});
     const s=c.subMap.get(key); s.plan+=plan; s.cerp+=cerp;
   }
-  const chapters=[...chMap.values()].map(c=>({name:c.name,plan:c.plan,cerp:c.cerp,
+  const parseTarget=nm=>{const m=String(nm).match(/\((\d+)\s*[-–—]\s*(\d+)\s*%\)/);return m?{lo:+m[1],hi:+m[2]}:null;};
+  const chapters=[...chMap.values()].map(c=>({name:c.name,plan:c.plan,cerp:c.cerp,target:parseTarget(c.name),
     sub:[...c.subMap.values()]}));
   return {chapters};
 }
@@ -205,7 +208,7 @@ function renderCards(){
     ['Čerpáno', fmt.format(Math.round(tc))+' Kč',''],
     ['Čerpání / plán', (tp>0?Math.round(tc/tp*100):0)+' %',''],
     ['Očekáváno (× tempo)', fmt.format(te)+' Kč',''],
-    ['Celková odchylka', signFmt(td), td<0?COL.neg:COL.pos],
+    ['Celková odchylka', signFmt(td), ''],
   ];
   document.getElementById('cards').innerHTML=cards.map(c=>
     `<div class="card"><div class="l">${c[0]}</div><div class="v" style="color:${c[2]||'var(--tx)'}">${c[1]}</div></div>`).join('');
@@ -214,38 +217,44 @@ function renderCards(){
 function renderLegend(){
   const L=document.getElementById('legend');
   if(mode==='dev'){
-    L.innerHTML=`<span><span class="sw" style="background:${COL.neg}"></span>pod tempem (riziko nevyčerpání)</span>
-      <span><span class="sw" style="background:${COL.pos}"></span>nad tempem / napřed</span>
-      <span>svislá čára = nula</span>`;
+    L.innerHTML=`<span><span class="sw" style="background:${COL.dev}"></span>délka pruhu = velikost odchylky</span>
+      <span>vlevo od osy = pod tempem · vpravo = nad tempem</span>
+      <span>svislá čára = nula (očekávané tempo)</span>`;
+  } else if(mode==='share'){
+    L.innerHTML=`<span><span class="sw" style="background:${COL.band};border:1px solid ${COL.bandbd}"></span>cílové rozmezí podílu na celku</span>
+      <span><span class="sw" style="background:${COL.cerp}"></span>skutečný podíl</span>
+      <span style="color:${COL.ok};font-weight:600">✓ v pořádku</span>
+      <span style="color:${COL.out};font-weight:600">✗ mimo rozmezí</span>`;
   } else {
     L.innerHTML=`<span><span class="sw" style="background:${COL.plan}"></span>plán</span>
       <span><span class="sw" style="background:${COL.cerp}"></span>čerpáno</span>`;
   }
 }
 
-function devRow(x){
-  const neg=x.dev<0;
-  return {neg, col:neg?COL.neg:COL.pos};
-}
-
 function render(){
   if(!DATA){return;}
   document.getElementById('paceval').textContent=pace+' %';
+  const isShare = mode==='share';
+  document.getElementById('viewseg').style.display = isShare?'none':'';
+  document.getElementById('sortbtn').style.display = isShare?'none':'';
   renderCards(); renderLegend();
-  const r=rowsForView();
   const viz=document.getElementById('viz');
+
+  if(isShare){ renderShare(viz); renderNote(); return; }
+
+  const r=rowsForView();
 
   if(mode==='dev'){
     const maxAbs=Math.max(1,...r.map(x=>Math.abs(x.dev)));
     viz.innerHTML=r.map(x=>{
-      const d=devRow(x); const halfW=Math.abs(x.dev)/maxAbs*50;
-      const bar=d.neg
-        ? `right:50%;width:${halfW}%;border-radius:6px 0 0 6px;background:${d.col};`
-        : `left:50%;width:${halfW}%;border-radius:0 6px 6px 0;background:${d.col};`;
+      const neg=x.dev<0; const halfW=Math.abs(x.dev)/maxAbs*50;
+      const bar=neg
+        ? `right:50%;width:${halfW}%;border-radius:6px 0 0 6px;background:${COL.dev};`
+        : `left:50%;width:${halfW}%;border-radius:0 6px 6px 0;background:${COL.dev};`;
       return `<div class="row ${x.big?'':'sm'}">
         <div class="rhead">
           <span class="rname ${x.big?'':'sm'}">${x.name}</span>
-          <span class="rdev" style="color:${d.col}">${signFmt(x.dev)}</span>
+          <span class="rdev">${signFmt(x.dev)}</span>
         </div>
         <div class="track ${x.big?'':'sm'}"><div class="zero"></div><div class="bar" style="${bar}"></div></div>
       </div>`;
@@ -260,24 +269,80 @@ function render(){
           <span class="rname ${x.big?'':'sm'}">${x.name}</span>
           <span class="rmeta">${fmt.format(Math.round(x.cerp))} / ${fmt.format(Math.round(x.plan))} Kč · ${pct} %</span>
         </div>
-        <div class="track" style="height:${x.big?34:26}px;background:transparent;">
-          <div class="bar" style="left:0;width:${wp}%;background:${COL.plan};border-radius:6px;height:${x.big?14:11}px;top:0;"></div>
-          <div class="bar" style="left:0;width:${wc}%;background:${COL.cerp};border-radius:6px;height:${x.big?14:11}px;bottom:0;"></div>
+        <div class="track ${x.big?'':'sm'}" style="background:transparent;">
+          <div class="bar" style="left:0;top:0;bottom:0;width:${wp}%;background:${COL.plan};border-radius:6px;"></div>
+          <div class="bar" style="left:0;top:0;bottom:0;width:${wc}%;background:${COL.cerp};border-radius:6px;"></div>
         </div>
       </div>`;
     }).join('');
   }
+  renderNote();
+}
+
+function pctCz(v){return v.toFixed(1).replace('.',',');}
+
+function renderShare(viz){
+  const tc=DATA.chapters.reduce((s,c)=>s+c.cerp,0)||1;
+  const banded=DATA.chapters.filter(c=>c.target).slice().sort(cmpStruct);
+  const others=DATA.chapters.filter(c=>!c.target).slice().sort(cmpStruct);
+  let maxUpper=0,maxShare=0;
+  banded.forEach(c=>{maxUpper=Math.max(maxUpper,c.target.hi);maxShare=Math.max(maxShare,c.cerp/tc*100);});
+  const MAX=Math.max(25, Math.ceil(Math.max(maxUpper,maxShare)*1.2/5)*5);
+  const ticks=[]; for(let t=0;t<=MAX;t+=5) ticks.push(t);
+
+  let html=banded.map(c=>{
+    const share=c.cerp/tc*100, lo=c.target.lo, hi=c.target.hi;
+    const inRange=share>=lo&&share<=hi;
+    const status=inRange?'✓ v pořádku':(share<lo?'✗ pod rozmezím':'✗ nad rozmezím');
+    const scol=inRange?COL.ok:COL.out;
+    const bandL=lo/MAX*100, bandW=(hi-lo)/MAX*100, barW=Math.min(share,MAX)/MAX*100;
+    return `<div class="row">
+      <div class="rhead">
+        <span class="rname">${shortName(c.name)}</span>
+        <span class="rdev" style="color:${scol}">${pctCz(share)} % · cíl ${lo}–${hi} % · ${status}</span>
+      </div>
+      <div class="track" style="height:30px;">
+        <div style="position:absolute;top:0;bottom:0;left:${bandL}%;width:${bandW}%;background:${COL.band};border-left:2px solid ${COL.bandbd};border-right:2px solid ${COL.bandbd};"></div>
+        <div class="bar" style="left:0;width:${barW}%;top:9px;bottom:9px;background:${COL.cerp};border-radius:0 4px 4px 0;"></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  html+=`<div style="position:relative;height:18px;margin:2px 0 6px;">`+
+    ticks.map(t=>`<span style="position:absolute;left:${t/MAX*100}%;transform:translateX(-50%);font-size:12px;color:var(--tx3);">${t} %</span>`).join('')+`</div>`;
+
+  if(others.length){
+    html+=`<div style="margin-top:14px;font-size:14px;color:var(--tx2);line-height:1.7;">`+
+      others.map(c=>`${shortName(c.name)}: <b>${pctCz(c.cerp/tc*100)} %</b> z celku <span style="color:var(--tx3)">(bez cílového rozmezí)</span>`).join('<br>')+`</div>`;
+  }
+  viz.innerHTML=html;
 }
 
 function renderNote(){
-  // automaticky upozorni na 2 největší absolutní podčerpání v detailu
+  const note=document.getElementById('note');
+  if(mode==='share'){
+    const tc=DATA.chapters.reduce((s,c)=>s+c.cerp,0)||1;
+    const out=DATA.chapters.filter(c=>c.target)
+      .map(c=>({n:shortName(c.name),s:c.cerp/tc*100,lo:c.target.lo,hi:c.target.hi}))
+      .filter(c=>c.s<c.lo||c.s>c.hi);
+    note.style.display='';
+    if(!out.length){
+      note.innerHTML='Všechny kapitoly s cílovým rozmezím jsou uvnitř svého pásma.';
+    } else {
+      note.innerHTML='Mimo cílové rozmezí: '+out.map(c=>
+        '<b>'+c.n+'</b> ('+pctCz(c.s)+' %, cíl '+c.lo+'–'+c.hi+' %, '+(c.s<c.lo?'pod':'nad')+' pásmem)').join(', ')+
+        '. Podíl je počítán ze skutečně čerpané částky celkem.';
+    }
+    return;
+  }
   let det=[]; DATA.chapters.forEach(c=>c.sub.forEach(s=>{
     const exp=s.plan*pace/100; det.push({label:s.label,dev:s.cerp-exp,plan:s.plan,cerp:s.cerp});
   }));
   det.sort((a,b)=>a.dev-b.dev);
   const worst=det.filter(d=>d.dev<0).slice(0,2);
-  if(!worst.length){document.getElementById('note').style.display='none';return;}
-  document.getElementById('note').innerHTML='Největší absolutní podčerpání proti tempu: '+
+  if(!worst.length){note.style.display='none';return;}
+  note.style.display='';
+  note.innerHTML='Největší absolutní podčerpání proti tempu: '+
     worst.map(d=>`<b>${shortName(d.label)}</b> (${signFmt(d.dev)})`).join(', ')+
     '. Tyto položky táhnou celkovou odchylku nejvíc – soustřeď pozornost sem, ne na procenta malých kapitol.';
 }
@@ -285,11 +350,11 @@ function renderNote(){
 function loadText(text){
   const agg=aggregate(text);
   if(!agg||agg.error){alert(agg&&agg.error?agg.error:'CSV se nepodařilo načíst.');return;}
-  DATA=agg; render(); renderNote();
+  DATA=agg; render();
 }
 
 // ovládání
-document.getElementById('pace').addEventListener('input',e=>{pace=+e.target.value;render();renderNote();});
+document.getElementById('pace').addEventListener('input',e=>{pace=+e.target.value;render();});
 document.getElementById('viewseg').addEventListener('click',e=>{
   const b=e.target.closest('button'); if(!b)return;
   view=b.dataset.v;[...e.currentTarget.children].forEach(x=>x.classList.toggle('on',x===b));render();
